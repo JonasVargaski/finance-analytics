@@ -5,6 +5,7 @@ import { getWalletDetails } from './processors/getWalletDetails';
 import { assembleWalletWithoutQuotation } from './processors/assembleWalletWithoutQuotation';
 import { PerformanceTransactionsUseCase } from './modules/wallets/useCases/performanceTransactionsUseCase/PerformanceTransactionsUseCase';
 import fiis from './data/fiis';
+import colors from './data/colors';
 
 const router = Router();
 
@@ -38,7 +39,26 @@ router.get('/wallet/performance/:id', async (req, res) => {
 });
 
 router.get('/wallet', (req, res) => {
-  res.status(200).json(wallets);
+  res.status(200).json(
+    wallets.map((x) => {
+      const amount = x.items.reduce((acc, cur) => {
+        acc += cur.quotas * cur.price;
+        return acc;
+      }, 0);
+
+      return {
+        ...x,
+        amount,
+        description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
+        items: x.items.map((y, i) => ({
+          ...y,
+          id: y.ticker + y.tradingDate,
+          color: colors[i],
+          percent: ((y.price * y.quotas) / amount) * 100,
+        })),
+      };
+    }),
+  );
 });
 
 export { router };
