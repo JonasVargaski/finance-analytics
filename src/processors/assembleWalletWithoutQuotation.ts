@@ -27,7 +27,6 @@ export async function assembleWalletWithoutQuotation(items: IItem[], value: numb
       return quotation;
     };
 
-    console.log();
     const quotation = getQuotation(parseISO(date), 0);
 
     return { ticker: x.ticker, weight: x.weight, price: quotation?.price, tradingDate: date };

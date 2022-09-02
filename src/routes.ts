@@ -25,7 +25,11 @@ router.get('/wallet/performance2', async (req, res) => {
   const { id } = req.query;
   const wallet = wallets.find((x) => x.id === id);
   if (!id) return res.status(400).send('Not found');
-  const itemsWithSector = wallet.items.map((x) => ({ ...x, sector: fiis.find((y) => y.ticker === x.ticker).sector }));
+  const itemsWithSector = wallet.items.map((x, i) => ({
+    ...x,
+    id: i.toString(),
+    sector: fiis.find((y) => y.ticker === x.ticker).sector,
+  }));
   const result = await new PerformanceTransactionsUseCase().execute(itemsWithSector);
   return res.status(200).json(result);
 });

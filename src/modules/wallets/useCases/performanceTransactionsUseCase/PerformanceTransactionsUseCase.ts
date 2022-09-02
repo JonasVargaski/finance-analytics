@@ -12,6 +12,7 @@ import {
 import { ScrapProvider } from '../../../fiis/providers/implementations/ScrapProvider';
 
 interface ITransaction {
+  id: string;
   ticker: string;
   sector: string;
   quotas: number;
@@ -27,6 +28,7 @@ interface IWalletPerformance {
   appreciationPercent: number;
   netProfit: number;
   transactions: Array<{
+    id: string;
     ticker: string;
     price: number;
     quotas: number;
@@ -50,14 +52,20 @@ interface IWalletPerformance {
       quotationDate: string;
     }[];
   }>;
+  groupedTransactions: Array<{
+    ticker: string;
+    currentPrice: number;
+    averagePrice: number;
+    transactions: IWalletPerformance['transactions'];
+  }>;
   proventsMonth: Array<{
     date: string;
     value: number;
   }>;
   portfolioComposition: Array<{
     sector: string;
+    amount: number;
     amountPercent: number;
-    value: number;
   }>;
 }
 
@@ -135,6 +143,7 @@ export class PerformanceTransactionsUseCase {
           : 0;
 
         const transactionResume = {
+          id: transaction.id,
           ticker: transaction.ticker,
           sector: transaction.sector,
           price: transaction.price,
@@ -174,24 +183,56 @@ export class PerformanceTransactionsUseCase {
           });
 
         const idxPortfolio = acc.portfolio.findIndex((p) => p.sector === cur.sector);
-        if (idxPortfolio === -1) acc.portfolio.push({ sector: cur.sector, amount: cur.amount });
+        if (idxPortfolio === -1) acc.portfolio.push({ sector: cur.sector, amount: cur.amount, amountPercent: 0 });
         else acc.portfolio[idxPortfolio].amount += cur.amount;
 
         return acc;
       },
-      { amount: 0, provents: 0, percentProvents: 0, appreciation: 0, proventsMonth: [], portfolio: [] },
+      {
+        amount: 0,
+        provents: 0,
+        percentProvents: 0,
+        appreciation: 0,
+        proventsMonth: [] as IWalletPerformance['proventsMonth'],
+        portfolio: [] as IWalletPerformance['portfolioComposition'],
+      },
     );
+
+    const groupedTransactions = transactionsResume.reduce((acc, cur) => {
+      const idx = acc.findIndex((x) => x.ticker === cur.ticker);
+
+      if (idx === -1) {
+        const group = transactionsResume.filter((t) => t.ticker === cur.ticker);
+
+        acc.push({
+          ticker: cur.ticker,
+          transactions: [cur],
+          currentPrice: cur.currentPrice,
+          averagePrice:
+            group.reduce((accT, curT) => {
+              accT += curT.price;
+              return accT;
+            }, 0) / group.length,
+        });
+      } else {
+        acc[idx].transactions.push(cur);
+      }
+      return acc;
+    }, [] as IWalletPerformance['groupedTransactions']);
 
     return {
       amout: totals.amount,
       provents: totals.provents,
       appreciation: totals.appreciation,
       transactions: transactionsResume,
+      groupedTransactions,
       proventsMonth: totals.proventsMonth,
       netProfit: totals.provents + totals.appreciation,
       appreciationPercent: (totals.appreciation / totals.amount) * 100,
       proventsPercent: totals.percentProvents / transactionsResume.filter((t) => t.provents).length || 0,
-      portfolioComposition: totals.portfolio.map((p) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100 })),
+      portfolioComposition: totals.portfolio
+        .map((p) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100 }))
+        .sort((a, b) => a.amount - b.amount),
     };
   }
 }
