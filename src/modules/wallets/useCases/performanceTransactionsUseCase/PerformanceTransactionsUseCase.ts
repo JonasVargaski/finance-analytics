@@ -9,6 +9,7 @@ import {
   isSameMonth,
   format,
 } from 'date-fns';
+import colors from '../../../../data/colors';
 import { ScrapProvider } from '../../../fiis/providers/implementations/ScrapProvider';
 
 interface ITransaction {
@@ -56,14 +57,23 @@ interface IWalletPerformance {
     ticker: string;
     currentPrice: number;
     averagePrice: number;
+    averagePricePercent: number;
+    amount: number;
+    color: string;
+    amountPercent: number;
+    quotas: number;
+    provents: number;
+    proventsPercent: number;
     transactions: IWalletPerformance['transactions'];
   }>;
   proventsMonth: Array<{
     date: string;
+    formatedDate: string;
     value: number;
   }>;
   portfolioComposition: Array<{
     sector: string;
+    color: string;
     amount: number;
     amountPercent: number;
   }>;
@@ -96,7 +106,7 @@ export class PerformanceTransactionsUseCase {
 
         const months = [
           tradingDate,
-          ...Array.from({ length: differenceInMonths(new Date(), tradingDate) }, (_, i) => {
+          ...Array.from({ length: differenceInMonths(lastDayOfMonth(new Date()), tradingDate) }, (_, i) => {
             const date = addMonths(tradingDate, i + 1);
             date.setDate(1);
             return date;
@@ -178,12 +188,14 @@ export class PerformanceTransactionsUseCase {
           .forEach((monthTransaction) => {
             const formatedDate = format(parseISO(monthTransaction.date), 'MM/yyyy');
             const idx = acc.proventsMonth.findIndex((a) => a.date === formatedDate);
-            if (idx === -1) acc.proventsMonth.push({ date: formatedDate, value: monthTransaction.provents });
+            if (idx === -1)
+              acc.proventsMonth.push({ date: monthTransaction.date, formatedDate, value: monthTransaction.provents });
             else acc.proventsMonth[idx].value += monthTransaction.provents;
           });
 
         const idxPortfolio = acc.portfolio.findIndex((p) => p.sector === cur.sector);
-        if (idxPortfolio === -1) acc.portfolio.push({ sector: cur.sector, amount: cur.amount, amountPercent: 0 });
+        if (idxPortfolio === -1)
+          acc.portfolio.push({ sector: cur.sector, amount: cur.amount, amountPercent: 0, color: '' });
         else acc.portfolio[idxPortfolio].amount += cur.amount;
 
         return acc;
@@ -203,16 +215,31 @@ export class PerformanceTransactionsUseCase {
 
       if (idx === -1) {
         const group = transactionsResume.filter((t) => t.ticker === cur.ticker);
+        const groupResume = group.reduce(
+          (acc, cur) => {
+            acc.amount += cur.amount;
+            acc.quotas += cur.quotas;
+            acc.provents += cur.provents;
+            acc.percentProvents += cur.percentProvents;
+            return acc;
+          },
+          { amount: 0, quotas: 0, provents: 0, percentProvents: 0 },
+        );
+
+        const averagePrice = groupResume.amount / groupResume.quotas;
 
         acc.push({
+          color: colors[Math.floor(Math.random() * (400 - 1 + 1)) + 1],
           ticker: cur.ticker,
           transactions: [cur],
           currentPrice: cur.currentPrice,
-          averagePrice:
-            group.reduce((accT, curT) => {
-              accT += curT.price;
-              return accT;
-            }, 0) / group.length,
+          amount: groupResume.amount,
+          quotas: groupResume.quotas,
+          provents: groupResume.provents,
+          proventsPercent: groupResume.percentProvents / group.filter((x) => x.provents).length || 0,
+          averagePrice,
+          amountPercent: (groupResume.amount / totals.amount) * 100,
+          averagePricePercent: ((cur.currentPrice - averagePrice) / averagePrice) * 100,
         });
       } else {
         acc[idx].transactions.push(cur);
@@ -231,7 +258,7 @@ export class PerformanceTransactionsUseCase {
       appreciationPercent: (totals.appreciation / totals.amount) * 100,
       proventsPercent: totals.percentProvents / transactionsResume.filter((t) => t.provents).length || 0,
       portfolioComposition: totals.portfolio
-        .map((p) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100 }))
+        .map((p, i) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100, color: colors[i + 31] }))
         .sort((a, b) => a.amount - b.amount),
     };
   }
