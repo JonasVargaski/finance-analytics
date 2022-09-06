@@ -187,7 +187,7 @@ export class PerformanceTransactionsUseCase {
           .filter((r) => r.provents > 0)
           .forEach((monthTransaction) => {
             const formatedDate = format(parseISO(monthTransaction.date), 'MM/yyyy');
-            const idx = acc.proventsMonth.findIndex((a) => a.date === formatedDate);
+            const idx = acc.proventsMonth.findIndex((a) => a.formatedDate === formatedDate);
             if (idx === -1)
               acc.proventsMonth.push({ date: monthTransaction.date, formatedDate, value: monthTransaction.provents });
             else acc.proventsMonth[idx].value += monthTransaction.provents;
