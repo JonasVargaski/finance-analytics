@@ -10,6 +10,7 @@ import {
   format,
 } from 'date-fns';
 import colors from '../../../../data/colors';
+import { percent } from '../../../../utils/numberFormat';
 import { ScrapProvider } from '../../../fiis/providers/implementations/ScrapProvider';
 
 interface ITransaction {
@@ -70,6 +71,8 @@ interface IWalletPerformance {
     date: string;
     formatedDate: string;
     value: number;
+    amount: number;
+    dy: number;
   }>;
   portfolioComposition: Array<{
     sector: string;
@@ -188,9 +191,18 @@ export class PerformanceTransactionsUseCase {
           .forEach((monthTransaction) => {
             const formatedDate = format(parseISO(monthTransaction.date), 'MM/yyyy');
             const idx = acc.proventsMonth.findIndex((a) => a.formatedDate === formatedDate);
-            if (idx === -1)
-              acc.proventsMonth.push({ date: monthTransaction.date, formatedDate, value: monthTransaction.provents });
-            else acc.proventsMonth[idx].value += monthTransaction.provents;
+
+            if (idx === -1) {
+              acc.proventsMonth.push({
+                date: monthTransaction.date,
+                formatedDate,
+                value: monthTransaction.provents,
+                amount: 0,
+                dy: 0,
+              });
+            } else {
+              acc.proventsMonth[idx].value += monthTransaction.provents;
+            }
           });
 
         const idxPortfolio = acc.portfolio.findIndex((p) => p.sector === cur.sector);
@@ -209,6 +221,32 @@ export class PerformanceTransactionsUseCase {
         portfolio: [] as IWalletPerformance['portfolioComposition'],
       },
     );
+
+    totals.proventsMonth.forEach((p) => {
+      const proventMonthDate = lastDayOfMonth(parseISO(p.date));
+      let amount = 0;
+      let provent = 0;
+
+      transactionsResume.forEach((t) => {
+        if (isBefore(parseISO(t.date), proventMonthDate)) {
+          const tProvents = t.resume.reduce((acc, cur) => {
+            if (cur.provents > 0 && isSameMonth(parseISO(cur.proventDate), proventMonthDate)) {
+              acc += cur.provents;
+            }
+            return acc;
+          }, 0);
+          if (tProvents > 0) {
+            amount += t.amount;
+            provent += tProvents;
+          }
+        }
+      });
+
+      if (provent === p.value) {
+        p.amount = amount;
+        p.dy = (provent / amount) * 100;
+      }
+    });
 
     const groupedTransactions = transactionsResume.reduce((acc, cur) => {
       const idx = acc.findIndex((x) => x.ticker === cur.ticker);

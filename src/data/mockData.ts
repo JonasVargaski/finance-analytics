@@ -69,6 +69,7 @@ export const wallets = [
       { ticker: 'VILG11', quotas: 34, price: 106.7, tradingDate: '2022-08-25T03:00:00.000Z' },
       { ticker: 'BRCO11', quotas: 64, price: 105, tradingDate: '2022-08-25T03:00:00.000Z' },
       { ticker: 'DEVA11', quotas: 1, price: 97.55, tradingDate: '2022-08-25T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 102.03, tradingDate: '2022-09-06T03:00:00.000Z' },
     ],
   },
   {
@@ -245,6 +246,18 @@ export const wallets = [
       { ticker: 'IRDM11', quotas: 5, price: 102.49, tradingDate: '2022-07-04T03:00:00.000Z' },
       { ticker: 'HGRU11', quotas: 4, price: 119.55, tradingDate: '2022-07-04T03:00:00.000Z' },
       { ticker: 'HGLG11', quotas: 9, price: 168.64, tradingDate: '2022-07-04T03:00:00.000Z' },
+    ],
+  },
+  {
+    id: '19',
+    name: 'TESTE KNCR11',
+    items: [
+      { ticker: 'KNCR11', quotas: 42, price: 102.03, tradingDate: '2022-09-06T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 101.97, tradingDate: '2022-08-05T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 100.8, tradingDate: '2022-07-06T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 100.5, tradingDate: '2022-06-06T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 101.03, tradingDate: '2022-05-06T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 101.04, tradingDate: '2022-04-06T03:00:00.000Z' },
     ],
   },
 ];
