@@ -257,7 +257,7 @@ export const wallets = [
       { ticker: 'KNCR11', quotas: 42, price: 100.8, tradingDate: '2022-07-06T03:00:00.000Z' },
       { ticker: 'KNCR11', quotas: 42, price: 100.5, tradingDate: '2022-06-06T03:00:00.000Z' },
       { ticker: 'KNCR11', quotas: 42, price: 101.03, tradingDate: '2022-05-06T03:00:00.000Z' },
-      { ticker: 'KNCR11', quotas: 42, price: 101.04, tradingDate: '2022-04-06T03:00:00.000Z' },
+      { ticker: 'KNCR11', quotas: 42, price: 101.04, tradingDate: '2020-09-06T03:00:00.000Z' },
     ],
   },
 ];

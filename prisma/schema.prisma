@@ -7,18 +7,68 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String   @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum Role {
+  USER
+  ADMIN
 }
 
-model Wallet {
+model Users {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallets Wallets[]
+
+  @@map("users")
+}
+
+model Wallets {
   id          String   @id @default(uuid())
-  name        String   @db.VarChar(255)
-  description String   @db.VarChar(255)
+  name        String
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  transactions Transactions[]
+  user         Users          @relation(fields: [userId], references: [id])
+  userId       String
+
+  @@map("wallets")
+}
+
+model Funds {
+  id          String   @id @default(uuid())
+  ticker      String   @unique
+  name        String
+  description String?
+  type        String
+  segment     String
+  mandate     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactions Transactions[]
+
+  @@map("funds")
+}
+
+model Transactions {
+  id         String    @id @default(uuid())
+  quotas     Int
+  value      Float
+  purchaseAt DateTime
+  saleAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  fund     Funds   @relation(fields: [fundId], references: [id])
+  fundId   String
+  wallet   Wallets @relation(fields: [walletId], references: [id])
+  walletId String
+
+  @@map("transactions")
 }
