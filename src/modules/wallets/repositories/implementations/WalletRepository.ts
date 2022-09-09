@@ -1,15 +1,10 @@
+import { prisma } from '../../../../database/prismaClient';
 import { Wallet } from '../../entities/Wallet';
 import { IWalletsRepository } from '../IWalletRepository';
 
 export class WalletsRepository implements IWalletsRepository {
-  private wallets: Wallet[] = [];
-
-  async findAll(): Promise<Wallet[]> {
-    return Promise.resolve(this.wallets);
-  }
-
-  async save(wallet: Wallet): Promise<string> {
-    this.wallets.push(wallet);
-    return '12345';
+  async findByUser(userId: string): Promise<Wallet[]> {
+    const wallets = await prisma.wallets.findMany({ where: { userId } });
+    return wallets;
   }
 }

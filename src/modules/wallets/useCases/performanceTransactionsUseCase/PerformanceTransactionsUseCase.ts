@@ -10,7 +10,6 @@ import {
   format,
 } from 'date-fns';
 import colors from '../../../../data/colors';
-import { percent } from '../../../../utils/numberFormat';
 import { ScrapProvider } from '../../../fiis/providers/implementations/ScrapProvider';
 
 interface ITransaction {
@@ -83,6 +82,8 @@ interface IWalletPerformance {
 }
 
 export class PerformanceTransactionsUseCase {
+  constructor(private scrapProvider: ScrapProvider) {}
+
   private findQuotationOfMonth(
     quotations: Array<{
       price: number;
@@ -98,8 +99,7 @@ export class PerformanceTransactionsUseCase {
   }
 
   async execute(transactions: ITransaction[]): Promise<IWalletPerformance> {
-    const scrapProvider = new ScrapProvider();
-    const fiisData = await Promise.all([...new Set(transactions.map((x) => x.ticker))].map(scrapProvider.find));
+    const fiisData = await Promise.all([...new Set(transactions.map((x) => x.ticker))].map(this.scrapProvider.find));
 
     const transactionsResume = transactions
       .sort((a, b) => parseISO(a.tradingDate).getTime() - parseISO(b.tradingDate).getTime())

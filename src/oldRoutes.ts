@@ -6,6 +6,7 @@ import { assembleWalletWithoutQuotation } from './processors/assembleWalletWitho
 import { PerformanceTransactionsUseCase } from './modules/wallets/useCases/performanceTransactionsUseCase/PerformanceTransactionsUseCase';
 import fiis from './data/fiis';
 import colors from './data/colors';
+import { ScrapProvider } from './modules/fiis/providers/implementations/ScrapProvider';
 
 const router = Router();
 
@@ -22,6 +23,8 @@ router.post('/wallet/assemble', (req, res) => {
 });
 
 router.get('/wallet/performance2', async (req, res) => {
+  const scrapProvider = new ScrapProvider();
+
   const { id } = req.query;
   const wallet = wallets.find((x) => x.id === id);
   if (!id) return res.status(400).send('Not found');
@@ -30,7 +33,7 @@ router.get('/wallet/performance2', async (req, res) => {
     id: i.toString(),
     sector: fiis.find((y) => y.ticker === x.ticker).sector,
   }));
-  const result = await new PerformanceTransactionsUseCase().execute(itemsWithSector);
+  const result = await new PerformanceTransactionsUseCase(scrapProvider).execute(itemsWithSector);
   return res.status(200).json(result);
 });
 
