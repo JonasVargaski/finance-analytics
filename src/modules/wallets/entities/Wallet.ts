@@ -1,10 +1,10 @@
-export class Wallet {
-  public readonly id: string;
+import { Wallets as tWallets } from '@prisma/client';
 
-  public name: string;
-  public description: string;
-
-  constructor(props: Omit<Wallet, 'id'>) {
-    Object.assign(this, props);
-  }
+export class Wallets implements tWallets {
+  id: string;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
 }

@@ -1,0 +1,16 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Fund analytics Documentation",
+    "description": "This is an API funds",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/wallets": {
+      "get": {
+        "summary": "List wallets",
+        "description": "List all user wallets"
+      }
+    }
+  }
+}

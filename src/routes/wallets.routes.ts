@@ -1,12 +1,10 @@
-import { Request, Response, Router } from 'express';
-import { WalletsRepository } from '../modules/wallets/repositories/implementations/WalletRepository';
-import { ListWalletsUseCase } from '../modules/wallets/useCases/listWalletsUseCase/ListWalletsUseCase';
+import { Router } from 'express';
+import { ListWalletsController } from '../modules/wallets/useCases/listWallets/ListWalletsController';
 
 const walletsRouter = Router();
 
-walletsRouter.get('/', async (request: Request, response: Response) => {
-  const wallets = await new ListWalletsUseCase(new WalletsRepository()).execute(request.userId);
-  return response.json(wallets);
-});
+const listWalletsController = new ListWalletsController();
+
+walletsRouter.get('/', listWalletsController.handle);
 
 export { walletsRouter };

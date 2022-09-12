@@ -3,7 +3,7 @@ import { AssembleWalletUseCase } from './modules/wallets/useCases/assembleWallet
 import { wallets } from './data/mockData';
 import { getWalletDetails } from './processors/getWalletDetails';
 import { assembleWalletWithoutQuotation } from './processors/assembleWalletWithoutQuotation';
-import { PerformanceTransactionsUseCase } from './modules/wallets/useCases/performanceTransactionsUseCase/PerformanceTransactionsUseCase';
+import { PerformanceTransactionsUseCase } from './modules/wallets/useCases/performanceTransactions/PerformanceTransactionsUseCase';
 import fiis from './data/fiis';
 import colors from './data/colors';
 import { ScrapProvider } from './modules/fiis/providers/implementations/ScrapProvider';

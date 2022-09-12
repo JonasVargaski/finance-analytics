@@ -1,7 +1,13 @@
 FROM node:16.3.0-alpine
 
-RUN apk add --no-cache bash
+WORKDIR /usr/app
 
-USER node
+COPY package.json ./
 
-WORKDIR /home/node/app
+RUN npm install
+
+COPY . .
+
+EXPOSE 3333
+
+CMD ["npm","run","dev"]

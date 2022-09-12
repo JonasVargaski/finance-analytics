@@ -1,11 +1,29 @@
 version: '3'
 
 services:
+  database:
+    image: postgres
+    container_name: database
+    restart: always
+    ports:
+      - 5432:5432
+    environment: 
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=funds
+    volumes: 
+      - pgdata:/data/postgres
   
   app:
     build: .
-    entrypoint: ./.docker/entrypoint.sh
+    container_name: app
     ports: 
       - 3333:3333
     volumes:
-      - .:/home/node/app
+      - .:/usr/app
+    depends_on:
+      - database
+      
+volumes:
+  pgdata:
+    driver: local
