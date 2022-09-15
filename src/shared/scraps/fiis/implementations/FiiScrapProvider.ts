@@ -2,9 +2,9 @@ import axios from 'axios';
 import puppeteer from 'puppeteer';
 import { format, parse } from 'date-fns';
 
-import { IFiiProvider, IFii, IFiiDetail, IQuotation, IProvent, IQuotationHistory } from '../IFiiProvider';
+import { IFiiScrapProvider, IFii, IQuotation, IProvent, IQuotationHistory } from '../IFiiScrapProvider';
 
-export class ScrapProvider implements IFiiProvider {
+export class FiiScrapProvider implements IFiiScrapProvider {
   async findAllResumed(): Promise<IFii[]> {
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -49,52 +49,6 @@ export class ScrapProvider implements IFiiProvider {
 
     browser.close();
     return result;
-  }
-
-  async find(ticker: string): Promise<IFiiDetail> {
-    interface IQuotation {
-      prices: Array<{
-        price: number;
-        date: string;
-      }>;
-    }
-
-    interface IProvent {
-      assetEarningsModels: Array<{
-        ed: string;
-        pd: string;
-        et: string;
-        v: number;
-      }>;
-    }
-
-    const [quotations, provents] = await Promise.all([
-      // `https://fii-api.infomoney.com.br/api/v1/fii/cotacao/historico/grafico?Ticker=${ticker}`,
-      axios.get<IQuotation[]>(`https://statusinvest.com.br/fii/tickerprice?ticker=${ticker}&type=4`),
-      axios.get<IProvent>(`https://statusinvest.com.br/fii/companytickerprovents?ticker=${ticker}&chartProventsType=1`),
-    ]);
-
-    quotations.data[0].prices.reverse();
-    const currentDate = new Date();
-
-    const formattedQuotations = quotations.data[0].prices.map((x) => {
-      const date = parse(x.date, 'dd/MM/yy HH:mm', currentDate);
-      return { date: date.toISOString(), price: x.price };
-    });
-
-    const formattedProvents = provents.data.assetEarningsModels
-      .filter((x) => x.et === 'Rendimento')
-      .map((x) => {
-        const baseDate = parse(x.ed, 'dd/MM/yyyy', currentDate);
-        const paymentdDate = parse(x.pd, 'dd/MM/yyyy', currentDate);
-        return {
-          dividend: x.v,
-          baseDate: baseDate.toISOString(),
-          paymentDate: paymentdDate.toISOString(),
-        };
-      });
-
-    return { ticker, provents: formattedProvents, quotations: formattedQuotations };
   }
 
   async findQuotations(ticker: string, start: Date, end: Date): Promise<IQuotation[]> {

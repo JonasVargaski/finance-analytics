@@ -13,13 +13,13 @@ enum Role {
 }
 
 model Users {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   wallets Wallets[]
 
@@ -59,7 +59,7 @@ model Funds {
 model Transactions {
   id         String    @id @default(uuid())
   quotas     Int
-  value      Float
+  price      Float
   purchaseAt DateTime
   saleAt     DateTime?
   createdAt  DateTime  @default(now())

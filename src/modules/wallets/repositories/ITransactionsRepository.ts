@@ -1,5 +1,19 @@
-import { Transactions } from '../entities/Transactions';
+export interface ITransaction {
+  id: string;
+  quotas: number;
+  price: number;
+  purchaseAt: Date;
+  saleAt: Date;
+  fund: {
+    id: string;
+    ticker: string;
+    name: string;
+    type: string;
+    segment: string;
+    mandate: string;
+  };
+}
 
 export interface ITransactionsRepository {
-  findAll(walletId: string): Promise<Transactions[]>;
+  findActives(walletId: string): Promise<ITransaction[]>;
 }

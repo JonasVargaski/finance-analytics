@@ -1,13 +1,14 @@
-import { Transactions as tTransactions } from '@prisma/client';
+import { Transactions as tTransactions, Funds } from '@prisma/client';
 
 export class Transactions implements tTransactions {
   id: string;
   quotas: number;
-  value: number;
+  price: number;
   purchaseAt: Date;
   saleAt: Date;
   createdAt: Date;
   updatedAt: Date;
-  fundId: string;
   walletId: string;
+  fundId: string;
+  fund: Funds;
 }

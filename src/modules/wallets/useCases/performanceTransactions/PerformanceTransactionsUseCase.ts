@@ -1,7 +1,7 @@
+import { inject, injectable } from 'tsyringe';
 import {
   addMonths,
   isBefore,
-  parseISO,
   lastDayOfMonth,
   isSameDay,
   addDays,
@@ -9,131 +9,73 @@ import {
   isSameMonth,
   format,
 } from 'date-fns';
-import colors from '../../../../data/colors';
-import { ScrapProvider } from '../../../fiis/providers/implementations/ScrapProvider';
 
-interface ITransaction {
-  id: string;
-  ticker: string;
-  sector: string;
-  quotas: number;
-  price: number;
-  tradingDate: string;
-}
+import { IWalletPerformanceDTO } from './PerformanceTransactionsDTO';
+import { IFiiScrapProvider } from '../../../../shared/scraps/fiis/IFiiScrapProvider';
+import { ITransactionsRepository } from '../../repositories/ITransactionsRepository';
 
-interface IWalletPerformance {
-  amout: number;
-  provents: number;
-  proventsPercent: number;
-  appreciation: number;
-  appreciationPercent: number;
-  netProfit: number;
-  transactions: Array<{
-    id: string;
-    ticker: string;
-    price: number;
-    quotas: number;
-    date: string;
-    amount: number;
-    currentPrice: number;
-    netProfit: number;
-    netProfitPercent: number;
-    provents: number;
-    percentProvents: number;
-    appreciation: number;
-    percentAppreciation: number;
-    resume: {
-      provents: number;
-      appreciation: number;
-      percentProvents: number;
-      percentAppreciation: number;
-      received: boolean;
-      date: string;
-      proventDate: string;
-      quotationDate: string;
-    }[];
-  }>;
-  groupedTransactions: Array<{
-    ticker: string;
-    currentPrice: number;
-    averagePrice: number;
-    averagePricePercent: number;
-    amount: number;
-    color: string;
-    amountPercent: number;
-    quotas: number;
-    provents: number;
-    proventsPercent: number;
-    transactions: IWalletPerformance['transactions'];
-  }>;
-  proventsMonth: Array<{
-    date: string;
-    formatedDate: string;
-    value: number;
-    amount: number;
-    dy: number;
-  }>;
-  portfolioComposition: Array<{
-    sector: string;
-    color: string;
-    amount: number;
-    amountPercent: number;
-  }>;
-}
-
+@injectable()
 export class PerformanceTransactionsUseCase {
-  constructor(private scrapProvider: ScrapProvider) {}
+  constructor(
+    @inject('FiiScrapProvider')
+    private scrapProvider: IFiiScrapProvider,
+    @inject('TransactionsRepository')
+    private transactionsRepository: ITransactionsRepository,
+  ) {}
 
-  private findQuotationOfMonth(
-    quotations: Array<{
-      price: number;
-      date: string;
-    }>,
-    month: Date,
-    days: number,
-  ) {
-    let quotation = quotations.find((q) => isSameDay(addDays(lastDayOfMonth(month), days), parseISO(q.date)));
+  private findQuotationOfMonth(quotations: Array<{ value: number; date: Date }>, month: Date, days: number) {
+    let quotation = quotations.find((q) => isSameDay(addDays(lastDayOfMonth(month), days), q.date));
     if (days < -31) return undefined;
     if (!quotation) quotation = this.findQuotationOfMonth(quotations, month, days - 1);
     return quotation;
   }
 
-  async execute(transactions: ITransaction[]): Promise<IWalletPerformance> {
-    const fiisData = await Promise.all([...new Set(transactions.map((x) => x.ticker))].map(this.scrapProvider.find));
+  async execute(walletId: string): Promise<IWalletPerformanceDTO> {
+    const transactions = await this.transactionsRepository.findActives(walletId);
+
+    const firstTransactionDate = new Date(Math.min(...transactions.map((x) => x.purchaseAt.getTime())));
+
+    const dataScrap = await Promise.all(
+      [...new Set(transactions.map((x) => x.fund.ticker))].map(async (ticker) => {
+        const quotations = await this.scrapProvider.findQuotations(ticker, firstTransactionDate, new Date());
+        const provents = await this.scrapProvider.findProvents(ticker);
+
+        return { ticker, quotations, provents };
+      }),
+    );
 
     const transactionsResume = transactions
-      .sort((a, b) => parseISO(a.tradingDate).getTime() - parseISO(b.tradingDate).getTime())
+      .sort((a, b) => a.purchaseAt.getTime() - b.purchaseAt.getTime())
       .map((transaction) => {
-        const fiiDetails = fiisData.find((fiiData) => fiiData.ticker === transaction.ticker);
-        const tradingDate = parseISO(transaction.tradingDate);
+        const scrap = dataScrap.find((scrap) => scrap.ticker === transaction.fund.ticker);
 
-        const months = [
-          tradingDate,
-          ...Array.from({ length: differenceInMonths(lastDayOfMonth(new Date()), tradingDate) }, (_, i) => {
-            const date = addMonths(tradingDate, i + 1);
+        const monthsForDetailedResumeResume = [
+          transaction.purchaseAt,
+          ...Array.from({ length: differenceInMonths(lastDayOfMonth(new Date()), transaction.purchaseAt) }, (_, i) => {
+            const date = addMonths(transaction.purchaseAt, i + 1);
             date.setDate(1);
             return date;
           }),
         ];
 
-        const groupedResult = months.map((month, i) => {
-          const proventsMonth = fiiDetails.provents.find((p) => {
-            const itsIncome = isSameMonth(month, parseISO(p.paymentDate));
+        const resumedTransactionMonth = monthsForDetailedResumeResume.map((month, i) => {
+          const proventsOfMonth = scrap.provents.find((p) => {
+            const itsIncome = isSameMonth(month, p.paymentDate);
             if (!itsIncome) return false;
-            const isMonthOfTrading = i === 0;
-            return isMonthOfTrading ? isBefore(month, parseISO(p.baseDate)) : itsIncome;
+            const isMonthOfPurchase = i === 0;
+            return isMonthOfPurchase ? isBefore(month, p.baseDate) : itsIncome;
           });
 
-          const lastQuotationMonth = this.findQuotationOfMonth(fiiDetails.quotations, month, 0);
-          const provents = transaction.quotas * (proventsMonth?.dividend || 0);
-          const percentProvents = ((proventsMonth?.dividend || 0) / transaction.price) * 100;
-          const appreciation = (lastQuotationMonth.price - transaction.price) * transaction.quotas;
-          const percentAppreciation = ((lastQuotationMonth.price - transaction.price) / transaction.price) * 100;
+          const lastQuotationMonth = this.findQuotationOfMonth(scrap.quotations, month, 0);
+          const provents = transaction.quotas * (proventsOfMonth?.dividend || 0);
+          const percentProvents = ((proventsOfMonth?.dividend || 0) / transaction.price) * 100;
+          const appreciation = (lastQuotationMonth.value - transaction.price) * transaction.quotas;
+          const percentAppreciation = ((lastQuotationMonth.value - transaction.price) / transaction.price) * 100;
 
           return {
-            date: month.toISOString(),
-            received: proventsMonth?.paymentDate ? isBefore(parseISO(proventsMonth?.paymentDate), new Date()) : false,
-            proventDate: proventsMonth?.paymentDate || null,
+            date: month,
+            received: proventsOfMonth?.paymentDate ? isBefore(proventsOfMonth.paymentDate, new Date()) : false,
+            proventDate: proventsOfMonth?.paymentDate || null,
             quotationDate: lastQuotationMonth.date,
             provents,
             appreciation,
@@ -143,25 +85,25 @@ export class PerformanceTransactionsUseCase {
         });
 
         const amount = transaction.quotas * transaction.price;
-        const currentPrice = this.findQuotationOfMonth(fiiDetails.quotations, new Date(), 0).price;
+        const currentPrice = this.findQuotationOfMonth(scrap.quotations, new Date(), 0)?.value;
         const appreciation = (currentPrice - transaction.price) * transaction.quotas;
 
-        const totalProvents = groupedResult.reduce((acc, cur) => {
+        const totalProvents = resumedTransactionMonth.reduce((acc, cur) => {
           acc += cur.provents;
           return acc;
         }, 0);
 
         const percentProvents = totalProvents
-          ? ((totalProvents / amount) * 100) / groupedResult.filter((x) => x.provents).length
+          ? ((totalProvents / amount) * 100) / resumedTransactionMonth.filter((x) => x.provents).length
           : 0;
 
         const transactionResume = {
           id: transaction.id,
-          ticker: transaction.ticker,
-          sector: transaction.sector,
+          ticker: transaction.fund.ticker,
+          sector: transaction.fund.type, // ajustar
           price: transaction.price,
           quotas: transaction.quotas,
-          date: transaction.tradingDate,
+          date: transaction.purchaseAt,
           amount,
           currentPrice,
           netProfit: totalProvents + appreciation,
@@ -170,7 +112,7 @@ export class PerformanceTransactionsUseCase {
           appreciation,
           percentProvents,
           percentAppreciation: ((currentPrice - transaction.price) / transaction.price) * 100,
-          resume: groupedResult,
+          resume: resumedTransactionMonth,
         };
 
         transactionResume.netProfitPercent =
@@ -189,7 +131,7 @@ export class PerformanceTransactionsUseCase {
         cur.resume
           .filter((r) => r.provents > 0)
           .forEach((monthTransaction) => {
-            const formatedDate = format(parseISO(monthTransaction.date), 'MM/yyyy');
+            const formatedDate = format(monthTransaction.date, 'MM/yyyy');
             const idx = acc.proventsMonth.findIndex((a) => a.formatedDate === formatedDate);
 
             if (idx === -1) {
@@ -217,20 +159,20 @@ export class PerformanceTransactionsUseCase {
         provents: 0,
         percentProvents: 0,
         appreciation: 0,
-        proventsMonth: [] as IWalletPerformance['proventsMonth'],
-        portfolio: [] as IWalletPerformance['portfolioComposition'],
+        proventsMonth: [] as IWalletPerformanceDTO['proventsMonth'],
+        portfolio: [] as IWalletPerformanceDTO['portfolioComposition'],
       },
     );
 
     totals.proventsMonth.forEach((p) => {
-      const proventMonthDate = lastDayOfMonth(parseISO(p.date));
+      const proventMonthDate = lastDayOfMonth(p.date);
       let amount = 0;
       let provent = 0;
 
       transactionsResume.forEach((t) => {
-        if (isBefore(parseISO(t.date), proventMonthDate)) {
+        if (isBefore(t.date, proventMonthDate)) {
           const tProvents = t.resume.reduce((acc, cur) => {
-            if (cur.provents > 0 && isSameMonth(parseISO(cur.proventDate), proventMonthDate)) {
+            if (cur.provents > 0 && isSameMonth(cur.proventDate, proventMonthDate)) {
               acc += cur.provents;
             }
             return acc;
@@ -267,7 +209,6 @@ export class PerformanceTransactionsUseCase {
         const averagePrice = groupResume.amount / groupResume.quotas;
 
         acc.push({
-          color: colors[Math.floor(Math.random() * (400 - 1 + 1)) + 1],
           ticker: cur.ticker,
           transactions: [cur],
           currentPrice: cur.currentPrice,
@@ -283,7 +224,7 @@ export class PerformanceTransactionsUseCase {
         acc[idx].transactions.push(cur);
       }
       return acc;
-    }, [] as IWalletPerformance['groupedTransactions']);
+    }, [] as IWalletPerformanceDTO['groupedTransactions']);
 
     return {
       amout: totals.amount,
@@ -296,7 +237,7 @@ export class PerformanceTransactionsUseCase {
       appreciationPercent: (totals.appreciation / totals.amount) * 100,
       proventsPercent: totals.percentProvents / transactionsResume.filter((t) => t.provents).length || 0,
       portfolioComposition: totals.portfolio
-        .map((p, i) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100, color: colors[i + 31] }))
+        .map((p) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100 }))
         .sort((a, b) => a.amount - b.amount),
     };
   }

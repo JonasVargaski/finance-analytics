@@ -45,22 +45,8 @@ export interface IProvent {
   paymentDate: Date;
 }
 
-export interface IFiiDetail {
-  ticker: string;
-  provents: Array<{
-    dividend: number;
-    baseDate: string;
-    paymentDate: string;
-  }>;
-  quotations: Array<{
-    price: number;
-    date: string;
-  }>;
-}
-
-export interface IFiiProvider {
+export interface IFiiScrapProvider {
   findAllResumed(): Promise<IFii[]>;
-  find(ticker: string): Promise<IFiiDetail>; // deprecated
   findQuotations(ticker: string, start: Date, end: Date): Promise<IQuotation[]>;
   findQuotationsOfDay(ticker: string): Promise<IQuotation[]>;
   findQuotationsLastFiveDays(ticker: string): Promise<IQuotationHistory>;
