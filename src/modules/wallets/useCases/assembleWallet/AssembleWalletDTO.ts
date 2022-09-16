@@ -1,18 +1,23 @@
-export interface IGenerateAssembleWalletDTO {
-  ticker: string;
-  weight: number;
-  price: number;
-  tradingDate: string;
+export interface IGenerateDTO {
+  value: number;
+  startDate: Date;
+  endDate: Date;
+  actives: {
+    ticker: string;
+    weight: number;
+  }[];
 }
 
 export interface IAssembleWalletDTO {
-  totalValue: number;
-  restValue: number;
-  totalQuotas: number;
-  items: Array<{
+  total: number;
+  rest: number;
+  quotas: number;
+  date: Date;
+  itens: {
     ticker: string;
     quotas: number;
     price: number;
-    tradingDate: string;
-  }>;
+    amount: number;
+    quotedAt: Date;
+  }[];
 }
