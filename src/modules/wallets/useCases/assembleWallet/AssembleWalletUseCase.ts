@@ -45,6 +45,7 @@ export class AssembleWalletUseCase {
       const wallet: IAssembleWalletDTO['itens'] = [];
       let totalQuotas = 0;
       let weightCorrection = 0;
+      let quotedAt = null;
 
       while (activesWithCotations.some((x) => x.price <= restValue) && weightCorrection < 99) {
         let amountTotal = 0;
@@ -58,7 +59,7 @@ export class AssembleWalletUseCase {
           totalQuotas += quotas;
           amountTotal += amount;
           const idx = wallet.findIndex((x) => x.ticker === active.ticker);
-          if (idx === -1)
+          if (idx === -1) {
             wallet.push({
               quotas,
               amount,
@@ -66,7 +67,10 @@ export class AssembleWalletUseCase {
               price: active.price,
               quotedAt: active.date,
             });
-          else {
+            if (!quotedAt) {
+              quotedAt = active.date;
+            }
+          } else {
             wallet[idx].amount += amount;
             wallet[idx].quotas += quotas;
           }
@@ -76,7 +80,7 @@ export class AssembleWalletUseCase {
         weightCorrection += 1;
       }
 
-      return { total: value - restValue, rest: restValue, quotas: totalQuotas, date, itens: wallet };
+      return { total: value - restValue, rest: restValue, quotas: totalQuotas, date: quotedAt, itens: wallet };
     });
 
     result.reverse();

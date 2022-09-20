@@ -12,7 +12,7 @@ export interface IAssembleWalletDTO {
   total: number;
   rest: number;
   quotas: number;
-  date: Date;
+  date?: Date | null;
   itens: {
     ticker: string;
     quotas: number;
