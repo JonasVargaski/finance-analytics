@@ -34,7 +34,7 @@ export class AssembleWalletUseCase {
       ...Array.from({ length: differenceInMonths(endDate, startDate) }, (_, i) => addMonths(startDate, i + 1)),
     ];
 
-    return monthDates.map<IAssembleWalletDTO>((date) => {
+    const result = monthDates.map<IAssembleWalletDTO>((date) => {
       const activesWithCotations = actives.map((active) => {
         const scrap = dataScrap.find((x) => x.ticker === active.ticker);
         const quotation = this.findQuotation(scrap.quotations, date, 0);
@@ -78,5 +78,8 @@ export class AssembleWalletUseCase {
 
       return { total: value - restValue, rest: restValue, quotas: totalQuotas, date, itens: wallet };
     });
+
+    result.reverse();
+    return result;
   }
 }
