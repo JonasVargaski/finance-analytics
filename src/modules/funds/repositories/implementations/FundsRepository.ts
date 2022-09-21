@@ -15,6 +15,7 @@ export class FundsRepository implements IFundsRepository {
         ],
       },
       select: {
+        id: true,
         name: true,
         description: true,
         ticker: true,

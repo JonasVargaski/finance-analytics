@@ -63,6 +63,7 @@ export class AssembleWalletUseCase {
             wallet.push({
               quotas,
               amount,
+              fundId: active.fundId,
               ticker: active.ticker,
               price: active.price,
               quotedAt: active.date,

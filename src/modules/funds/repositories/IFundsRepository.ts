@@ -1,4 +1,5 @@
 export interface IFundsSelect {
+  id: string;
   name: string;
   ticker: string;
   description: string;

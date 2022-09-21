@@ -45,10 +45,18 @@ export interface IProvent {
   paymentDate: Date;
 }
 
+export interface IFiiDetail {
+  ticker: string;
+  status: 'success' | 'error';
+  error: string | null;
+  data: { [key: string]: string } | null;
+}
+
 export interface IFiiScrapProvider {
   findAllResumed(): Promise<IFii[]>;
   findQuotations(ticker: string, start: Date, end: Date): Promise<IQuotation[]>;
   findQuotationsOfDay(ticker: string): Promise<IQuotation[]>;
   findQuotationsLastFiveDays(ticker: string): Promise<IQuotationHistory>;
   findProvents(ticker: string): Promise<IProvent[]>;
+  findDetails(tickers: string[]): Promise<IFiiDetail[]>;
 }

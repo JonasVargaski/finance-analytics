@@ -2,9 +2,26 @@ import axios from 'axios';
 import puppeteer from 'puppeteer';
 import { format, parse } from 'date-fns';
 
-import { IFiiScrapProvider, IFii, IQuotation, IProvent, IQuotationHistory } from '../IFiiScrapProvider';
+import { IFiiScrapProvider, IFii, IQuotation, IProvent, IQuotationHistory, IFiiDetail } from '../IFiiScrapProvider';
 
 export class FiiScrapProvider implements IFiiScrapProvider {
+  private parseToCamelCase(str) {
+    return String(str)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/([()./])/g, '')
+      .trim()
+      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => (index === 0 ? word.toLowerCase() : word.toUpperCase()))
+      .replace(/\s+/g, '');
+  }
+
+  private mapKeyValueToObject(array: { key: string; value: any }[]) {
+    return array.reduce((acc, cur) => {
+      acc[this.parseToCamelCase(cur.key)] = cur.value;
+      return acc;
+    }, {});
+  }
+
   async findAllResumed(): Promise<IFii[]> {
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -164,5 +181,129 @@ export class FiiScrapProvider implements IFiiScrapProvider {
         value: Number(value),
       })),
     };
+  }
+
+  async findDetails(tickers: string[]): Promise<IFiiDetail[]> {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setRequestInterception(true);
+
+    page.on('request', (req) => {
+      if (
+        !(
+          req.url().match(/https:\/\/fiis.com.br\/.*\/?scrap=true/i) ||
+          req.url().match(/https:\/\/www.fundsexplorer.com.br\/ranking.*\?scrap=true/i)
+        )
+      ) {
+        req.abort();
+      } else {
+        console.log(req.url());
+        req.continue();
+      }
+    });
+
+    const result: IFiiDetail[] = [];
+
+    const process = async (index: number) => {
+      const ticker = tickers[index];
+      if (!ticker) return;
+
+      try {
+        await page.goto(`https://fiis.com.br/${ticker}/?scrap=true`, { waitUntil: 'networkidle2' });
+
+        const scrapData = await page.evaluate(() => {
+          const data = [];
+
+          const keys = [];
+
+          const basic = document.querySelector('#informations--basic');
+
+          if (basic) {
+            basic.querySelectorAll('.title').forEach((node) => keys.push(node.textContent.trim()));
+            const values = basic.querySelectorAll('.value');
+            keys.forEach((key, i) => data.push({ key, value: values[i].textContent }));
+          }
+
+          const notes = document.querySelector('.notas p');
+          if (notes) {
+            notes.querySelectorAll('br').forEach((node) => node.replaceWith('\n'));
+            data.push({
+              key: 'notes',
+              value: notes.textContent
+                .split('\n')
+                .map((x) => x.trim())
+                .filter(Boolean),
+            });
+          }
+
+          return data;
+        });
+
+        result.push({
+          ticker: ticker.toUpperCase(),
+          status: 'success',
+          error: null,
+          data: this.mapKeyValueToObject(scrapData),
+        });
+      } catch (error) {
+        result.push({ ticker: ticker.toUpperCase(), status: 'error', error: error.message, data: null });
+      } finally {
+        const nextIndex = index + 1;
+        if (tickers[nextIndex]) {
+          await process(nextIndex);
+        }
+      }
+    };
+
+    await process(0);
+
+    await page.goto('https://www.fundsexplorer.com.br/ranking?scrap=true');
+
+    const explorerResult = await page.evaluate(() => {
+      const data = [];
+
+      const table = document.querySelector('#table-ranking');
+      if (table) {
+        const keys = [];
+        table
+          .querySelector('thead tr')
+          .querySelectorAll('th')
+          .forEach((node) => {
+            node.querySelectorAll('br').forEach((n) => n.replaceWith(' '));
+            keys.push(node.textContent.replace(/([()./])/g, ''));
+          });
+
+        table.querySelectorAll('tbody tr').forEach((row: HTMLTableRowElement) => {
+          data.push({
+            ticker: row.cells[0].textContent.toUpperCase(),
+            value: keys
+              .map((key, i) => {
+                let value = row.cells[i].getAttribute('data-order') || row.cells[i].textContent;
+                // eslint-disable-next-line no-restricted-globals
+                if (!isNaN(Number(value)) && Number(value) < -99) {
+                  value = null;
+                }
+                return { key, value };
+              })
+              .filter((x) => x.value),
+          });
+        });
+      }
+      return data;
+    });
+
+    result.forEach((result) => {
+      if (result.status === 'success') {
+        console.log(explorerResult[0]);
+        explorerResult
+          ?.find((x) => x.ticker === result.ticker)
+          ?.value?.forEach((x) => {
+            result.data[this.parseToCamelCase(x.key)] = x.value;
+          });
+      }
+    });
+
+    await browser.close();
+    return result;
   }
 }

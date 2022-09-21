@@ -3,6 +3,7 @@ export interface IGenerateDTO {
   startDate: Date;
   endDate: Date;
   actives: {
+    fundId?: string;
     ticker: string;
     weight: number;
   }[];
@@ -14,6 +15,7 @@ export interface IAssembleWalletDTO {
   quotas: number;
   date?: Date | null;
   itens: {
+    fundId: string;
     ticker: string;
     quotas: number;
     price: number;

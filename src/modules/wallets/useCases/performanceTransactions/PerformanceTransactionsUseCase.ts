@@ -100,7 +100,7 @@ export class PerformanceTransactionsUseCase {
         const transactionResume = {
           id: transaction.id,
           ticker: transaction.fund.ticker,
-          sector: transaction.fund.type, // ajustar
+          sector: transaction.fund.segment, // ajustar
           price: transaction.price,
           quotas: transaction.quotas,
           date: transaction.purchaseAt,
