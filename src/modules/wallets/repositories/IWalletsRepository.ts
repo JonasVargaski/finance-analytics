@@ -13,4 +13,5 @@ export interface ICreate {
 export interface IWalletsRepository {
   findByUser(userId: string): Promise<Wallets[]>;
   create(userId: string, wallet: ICreate): Promise<void>;
+  delete(walletId: string): Promise<void>;
 }

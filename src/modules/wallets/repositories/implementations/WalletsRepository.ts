@@ -3,6 +3,11 @@ import { Wallets } from '../../entities/Wallet';
 import { ICreate, IWalletsRepository } from '../IWalletsRepository';
 
 export class WalletsRepository implements IWalletsRepository {
+  async delete(walletId: string): Promise<void> {
+    await prisma.transactions.deleteMany({ where: { walletId } });
+    await prisma.wallets.delete({ where: { id: walletId } });
+  }
+
   async create(userId: string, wallet: ICreate): Promise<void> {
     await prisma.wallets.create({
       data: {
