@@ -197,7 +197,6 @@ export class FiiScrapProvider implements IFiiScrapProvider {
       ) {
         req.abort();
       } else {
-        console.log(req.url());
         req.continue();
       }
     });
@@ -294,7 +293,6 @@ export class FiiScrapProvider implements IFiiScrapProvider {
 
     result.forEach((result) => {
       if (result.status === 'success') {
-        console.log(explorerResult[0]);
         explorerResult
           ?.find((x) => x.ticker === result.ticker)
           ?.value?.forEach((x) => {

@@ -100,7 +100,7 @@ export class PerformanceTransactionsUseCase {
         const transactionResume = {
           id: transaction.id,
           ticker: transaction.fund.ticker,
-          sector: transaction.fund.segment, // ajustar
+          sector: `${transaction.fund.type} - ${transaction.fund.segment}`,
           price: transaction.price,
           quotas: transaction.quotas,
           date: transaction.purchaseAt,
@@ -189,6 +189,8 @@ export class PerformanceTransactionsUseCase {
         p.dy = (provent / amount) * 100;
       }
     });
+
+    totals.proventsMonth = totals.proventsMonth.sort((a, b) => (isBefore(a.date, b.date) ? -1 : 1));
 
     const groupedTransactions = transactionsResume.reduce((acc, cur) => {
       const idx = acc.findIndex((x) => x.ticker === cur.ticker);

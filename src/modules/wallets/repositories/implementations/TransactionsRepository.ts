@@ -25,6 +25,9 @@ export class TransactionsRepository implements ITransactionsRepository {
           },
         },
       },
+      orderBy: {
+        purchaseAt: 'desc',
+      },
     });
   }
 }
