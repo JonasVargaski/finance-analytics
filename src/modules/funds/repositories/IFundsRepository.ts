@@ -7,4 +7,5 @@ export interface IFundsSelect {
 
 export interface IFundsRepository {
   findByText(text: string): Promise<IFundsSelect[]>;
+  findAll(): Promise<IFundsSelect[]>;
 }

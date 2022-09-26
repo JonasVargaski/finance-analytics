@@ -1,8 +1,23 @@
 import { prisma } from '../../../../database/prismaClient';
 import { Wallets } from '../../entities/Wallet';
-import { ICreate, IWalletsRepository } from '../IWalletsRepository';
+import { ICreate, IWallet, IWalletsRepository } from '../IWalletsRepository';
 
 export class WalletsRepository implements IWalletsRepository {
+  find(walletId: string): Promise<IWallet> {
+    return prisma.wallets.findUniqueOrThrow({
+      where: {
+        id: walletId,
+      },
+      include: {
+        transactions: {
+          orderBy: {
+            purchaseAt: 'asc',
+          },
+        },
+      },
+    });
+  }
+
   async delete(walletId: string): Promise<void> {
     await prisma.transactions.deleteMany({ where: { walletId } });
     await prisma.wallets.delete({ where: { id: walletId } });

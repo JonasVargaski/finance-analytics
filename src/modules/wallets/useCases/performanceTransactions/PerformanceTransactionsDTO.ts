@@ -49,7 +49,7 @@ interface IProventsMonth {
 
 interface IPortfolio {
   sector: string;
-  color: string;
+  tickers: string[];
   amount: number;
   amountPercent: number;
 }

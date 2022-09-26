@@ -148,9 +148,13 @@ export class PerformanceTransactionsUseCase {
           });
 
         const idxPortfolio = acc.portfolio.findIndex((p) => p.sector === cur.sector);
-        if (idxPortfolio === -1)
-          acc.portfolio.push({ sector: cur.sector, amount: cur.amount, amountPercent: 0, color: '' });
-        else acc.portfolio[idxPortfolio].amount += cur.amount;
+        if (idxPortfolio === -1) {
+          acc.portfolio.push({ sector: cur.sector, amount: cur.amount, amountPercent: 0, tickers: [cur.ticker] });
+        } else {
+          acc.portfolio[idxPortfolio].amount += cur.amount;
+          if (!acc.portfolio[idxPortfolio].tickers.some((t) => t === cur.ticker))
+            acc.portfolio[idxPortfolio].tickers.push(cur.ticker);
+        }
 
         return acc;
       },
