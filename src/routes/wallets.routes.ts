@@ -6,10 +6,12 @@ import { CreateWalletsController } from '../modules/wallets/useCases/createWalle
 import { PerformanceTransactionsController } from '../modules/wallets/useCases/performanceTransactions/PerformanceTransactionsController';
 import { DeleteWalletsController } from '../modules/wallets/useCases/deleteWallet/DeleteWalletController';
 import { GetWalletsController } from '../modules/wallets/useCases/getWallet/GetWalletController';
+import { UpdateWalletsController } from '../modules/wallets/useCases/updateWallet/UpdateWalletController';
 
 const walletsRouter = Router();
 
 const getWalletController = new GetWalletsController();
+const updateWalletController = new UpdateWalletsController();
 const listWalletsController = new ListWalletsController();
 const createWalletsController = new CreateWalletsController();
 const deleteWalletsController = new DeleteWalletsController();
@@ -19,6 +21,7 @@ const assembleWalletController = new AssembleWalletController();
 walletsRouter.get('/all', listWalletsController.handle);
 walletsRouter.get('/', getWalletController.handle);
 walletsRouter.post('/', createWalletsController.handle);
+walletsRouter.put('/', updateWalletController.handle);
 walletsRouter.delete('/', deleteWalletsController.handle);
 walletsRouter.get('/performance', performanceTransactionsController.handle);
 walletsRouter.post('/assemble', assembleWalletController.handle);
