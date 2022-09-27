@@ -9,11 +9,15 @@ import { WalletsRepository } from '../../modules/wallets/repositories/implementa
 import { IFundsRepository } from '../../modules/funds/repositories/IFundsRepository';
 import { FundsRepository } from '../../modules/funds/repositories/implementations/FundsRepository';
 
+import { IRadarRepository } from '../../modules/radar/repositories/IRadarRepository';
+import { RadarRepository } from '../../modules/radar/repositories/implementations/RadarRepository';
+
 import { IFiiScrapProvider } from '../scraps/fiis/IFiiScrapProvider';
 import { FiiScrapProvider } from '../scraps/fiis/implementations/FiiScrapProvider';
 
 container.registerSingleton<IWalletsRepository>('WalletsRepository', WalletsRepository);
 container.registerSingleton<ITransactionsRepository>('TransactionsRepository', TransactionsRepository);
 container.registerSingleton<IFundsRepository>('FundsRepository', FundsRepository);
+container.registerSingleton<IRadarRepository>('RadarRepository', RadarRepository);
 
 container.registerSingleton<IFiiScrapProvider>('FiiScrapProvider', FiiScrapProvider);

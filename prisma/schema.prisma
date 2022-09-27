@@ -22,6 +22,7 @@ model Users {
   updatedAt DateTime @updatedAt
 
   wallets Wallets[]
+  Radar   Radar[]
 
   @@map("users")
 }
@@ -52,6 +53,7 @@ model Funds {
   updatedAt   DateTime @updatedAt
 
   transactions Transactions[]
+  Radar        Radar[]
 
   @@map("funds")
 }
@@ -71,4 +73,16 @@ model Transactions {
   walletId String
 
   @@map("transactions")
+}
+
+model Radar {
+  id String @id @default(uuid())
+
+  fund   Funds  @relation(fields: [fundId], references: [id])
+  fundId String
+
+  user   Users  @relation(fields: [userId], references: [id])
+  userId String
+
+  @@map("radars")
 }
