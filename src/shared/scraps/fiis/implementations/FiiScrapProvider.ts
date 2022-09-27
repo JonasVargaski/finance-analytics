@@ -2,7 +2,7 @@ import axios from 'axios';
 import puppeteer from 'puppeteer';
 import { format, parse } from 'date-fns';
 
-import { IFiiScrapProvider, IFii, IQuotation, IProvent, IQuotationHistory, IFiiDetail } from '../IFiiScrapProvider';
+import { IFiiScrapProvider, IFii, IQuotation, IProvent, IFiiDetail, IVariation } from '../IFiiScrapProvider';
 
 export class FiiScrapProvider implements IFiiScrapProvider {
   private parseToCamelCase(str) {
@@ -91,29 +91,6 @@ export class FiiScrapProvider implements IFiiScrapProvider {
     }));
   }
 
-  async findQuotationsOfDay(ticker: string): Promise<IQuotation[]> {
-    type IResultData = {
-      data: Array<{
-        prices: Array<{
-          price: number;
-          date: string;
-        }>;
-      }>;
-    };
-
-    const { data } = await axios.get<IResultData>('https://statusinvest.com.br/fii/tickerpricerange', {
-      params: { ticker, type: -1 },
-    });
-
-    data.data[0].prices.reverse();
-    const currentDate = new Date();
-
-    return data.data[0].prices.map((quotation) => ({
-      date: parse(quotation.date, 'dd/MM/yy HH:mm', currentDate),
-      value: quotation.price,
-    }));
-  }
-
   async findProvents(ticker: string): Promise<IProvent[]> {
     interface IResult {
       assetEarningsModels: Array<{
@@ -137,50 +114,6 @@ export class FiiScrapProvider implements IFiiScrapProvider {
         baseDate: parse(x.ed, 'dd/MM/yyyy', currentDate),
         paymentDate: parse(x.pd, 'dd/MM/yyyy', currentDate),
       }));
-  }
-
-  async findQuotationsLastFiveDays(ticker: string): Promise<IQuotationHistory> {
-    interface IResult {
-      quotationsDataArrayResponse: Array<string>;
-      dateRangeSelectedStringResponse: {
-        from: string;
-        to: string;
-      };
-      dataSourceObject: {
-        min: string;
-        max: string;
-        upDown: 'up' | 'down';
-        variation: number;
-        variationValue: number;
-      };
-    }
-
-    const { data } = await axios.post<IResult>('https://www.suno.com.br/fundos-imobiliarios/api/quotations/filter/', {
-      ticker,
-      range: '5D',
-    });
-
-    const currentDate = new Date();
-    data.quotationsDataArrayResponse.reverse();
-
-    const filtered = {};
-    data.quotationsDataArrayResponse.forEach(([date, value]) => {
-      filtered[date] = value;
-    });
-
-    return {
-      from: parse(data.dateRangeSelectedStringResponse.from, 'dd.MM.yyyy', currentDate),
-      to: parse(data.dateRangeSelectedStringResponse.to, 'dd.MM.yyyy', currentDate),
-      min: Number(data.dataSourceObject.min),
-      max: Number(data.dataSourceObject.max),
-      variationType: data.dataSourceObject.upDown,
-      variationPercent: data.dataSourceObject.variation,
-      variation: data.dataSourceObject.variationValue,
-      data: Object.entries(filtered).map(([date, value]) => ({
-        date: parse(date, 'dd/MM/yyyy HH:mm', currentDate),
-        value: Number(value),
-      })),
-    };
   }
 
   async findDetails(tickers: string[]): Promise<IFiiDetail[]> {
@@ -303,5 +236,60 @@ export class FiiScrapProvider implements IFiiScrapProvider {
 
     await browser.close();
     return result;
+  }
+
+  async findQuotationsOfPeriod(ticker: string, startDate: Date): Promise<IQuotation[]> {
+    type IResultData = [number, number, number, number, number, number];
+
+    const { data } = await axios.get<IResultData[]>('https://grafique.enfoque.com.br/ri/wsEmpresas/cotacoes.asmx/ID2', {
+      params: { ATIVO: ticker, DATAINICIO: format(startDate, 'yyyy-MM-dd'), MPB: 1, VNOM: 'ON' },
+    });
+
+    return data.map((d) => ({ date: new Date(d[0]), value: d[4] }));
+  }
+
+  async findHistoryVariation(ticker: string, startDate: Date, endDate: Date): Promise<IVariation[]> {
+    type IResultData = {
+      Data: string;
+      Abertura: string;
+      Maxima: string;
+      Minima: string;
+      Fechamento: string;
+      Media: string;
+      Variacao: string;
+      Negocios: string;
+      Volume: string;
+      QuantidadeTitulos: string;
+    };
+
+    const { data } = await axios.get<IResultData[]>(
+      'https://ri.enfoque.com.br/RIWeb/Empresas/Home/GetHistoricalData/CotacaoHistorica',
+      {
+        params: {
+          ticker,
+          startDate: format(startDate, 'dd/MM/yyyy'),
+          endDate: format(endDate, 'dd/MM/yyyy'),
+          adjsment: true,
+          idioma: 1,
+        },
+      },
+    );
+
+    function strToNumber(str: string): number {
+      return Number(str.replace(/,/g, '.').replace('%', ''));
+    }
+
+    return data.map((d) => ({
+      date: parse(d.Data, 'dd/MM/yy', new Date()),
+      open: strToNumber(d.Abertura),
+      close: strToNumber(d.Fechamento),
+      max: strToNumber(d.Maxima),
+      min: strToNumber(d.Minima),
+      average: strToNumber(d.Media),
+      volume: Number(d.Volume.replace(/\./g, '')),
+      variation: strToNumber(d.Variacao),
+      negotiation: strToNumber(d.Negocios),
+      titles: strToNumber(d.QuantidadeTitulos),
+    }));
   }
 }

@@ -25,20 +25,6 @@ export interface IQuotation {
   date: Date;
 }
 
-export interface IQuotationHistory {
-  from: Date;
-  to: Date;
-  min: number;
-  max: number;
-  variationType: 'up' | 'down';
-  variation: number;
-  variationPercent: number;
-  data: Array<{
-    value: number;
-    date: Date;
-  }>;
-}
-
 export interface IProvent {
   dividend: number;
   baseDate: Date;
@@ -52,11 +38,24 @@ export interface IFiiDetail {
   data: { [key: string]: string } | null;
 }
 
+export interface IVariation {
+  date: Date;
+  open: number;
+  max: number;
+  min: number;
+  average: number;
+  close: number;
+  volume: number;
+  variation: number;
+  negotiation: number;
+  titles: number;
+}
+
 export interface IFiiScrapProvider {
   findAllResumed(): Promise<IFii[]>;
   findQuotations(ticker: string, start: Date, end: Date): Promise<IQuotation[]>;
-  findQuotationsOfDay(ticker: string): Promise<IQuotation[]>;
-  findQuotationsLastFiveDays(ticker: string): Promise<IQuotationHistory>;
   findProvents(ticker: string): Promise<IProvent[]>;
   findDetails(tickers: string[]): Promise<IFiiDetail[]>;
+  findQuotationsOfPeriod(ticker: string, startDate: Date): Promise<IQuotation[]>;
+  findHistoryVariation(ticker: string, startDate: Date, endDate: Date): Promise<IVariation[]>;
 }
