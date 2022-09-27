@@ -3,7 +3,7 @@ import { ICreateRadar, IRadar, IRadarRepository } from '../IRadarRepository';
 
 export class RadarRepository implements IRadarRepository {
   async exclude(id: string): Promise<void> {
-    prisma.radar.delete({
+    await prisma.radar.delete({
       where: {
         id,
       },
