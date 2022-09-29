@@ -232,6 +232,15 @@ export class PerformanceTransactionsUseCase {
       return acc;
     }, [] as IWalletPerformanceDTO['groupedTransactions']);
 
+    const totalsProvents = totals.proventsMonth.reduce(
+      (acc, cur) => {
+        acc.sum += cur.dy * cur.value;
+        acc.weight += cur.value;
+        return acc;
+      },
+      { sum: 0, weight: 0 },
+    );
+
     return {
       amout: totals.amount,
       provents: totals.provents,
@@ -241,7 +250,7 @@ export class PerformanceTransactionsUseCase {
       proventsMonth: totals.proventsMonth,
       netProfit: totals.provents + totals.appreciation,
       appreciationPercent: (totals.appreciation / totals.amount) * 100,
-      proventsPercent: totals.percentProvents / transactionsResume.filter((t) => t.provents).length || 0,
+      proventsPercent: totalsProvents.sum / totalsProvents.weight,
       portfolioComposition: totals.portfolio
         .map((p) => ({ ...p, amountPercent: (p.amount / totals.amount) * 100 }))
         .sort((a, b) => a.amount - b.amount),
