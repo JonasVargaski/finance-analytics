@@ -10,7 +10,7 @@ import {
   format,
 } from 'date-fns';
 
-import { IWalletPerformanceDTO } from './PerformanceTransactionsDTO';
+import { IResumeMonth, IWalletPerformanceDTO } from './PerformanceTransactionsDTO';
 import { IFiiScrapProvider } from '../../../../shared/scraps/fiis/IFiiScrapProvider';
 import { ITransactionsRepository } from '../../repositories/ITransactionsRepository';
 
@@ -43,6 +43,40 @@ export class PerformanceTransactionsUseCase {
         return { ticker, quotations, provents };
       }),
     );
+
+    const appreciationMonth: IResumeMonth[] = [];
+    const diffMonths = differenceInMonths(lastDayOfMonth(new Date()), firstTransactionDate);
+
+    for (let i = 0; i <= diffMonths; i += 1) {
+      const lastDayMonth = i === diffMonths ? new Date() : lastDayOfMonth(addMonths(firstTransactionDate, i));
+      const transactionsOfMonth = transactions
+        .filter((t) => isBefore(t.purchaseAt, lastDayMonth))
+        .map((t) => {
+          const quotation = this.findQuotationOfMonth(
+            dataScrap.find((x) => x.ticker.toUpperCase() === t.fund.ticker.toUpperCase()).quotations,
+            lastDayMonth,
+            0,
+          );
+          return { ...t, quotation };
+        });
+
+      const result = transactionsOfMonth.reduce(
+        (acc, cur) => {
+          acc.amount += cur.quotas * cur.price;
+          acc.appreciation += (cur.quotation.value - cur.price) * cur.quotas;
+          return acc;
+        },
+        { amount: 0, appreciation: 0 },
+      );
+
+      appreciationMonth.push({
+        date: lastDayMonth,
+        formatedDate: format(lastDayMonth, 'MM/yyyy'),
+        amount: result.amount,
+        value: result.appreciation,
+        dy: (result.appreciation / result.amount) * 100,
+      });
+    }
 
     const transactionsResume = transactions
       .sort((a, b) => a.purchaseAt.getTime() - b.purchaseAt.getTime())
@@ -247,6 +281,7 @@ export class PerformanceTransactionsUseCase {
       appreciation: totals.appreciation,
       transactions: transactionsResume,
       groupedTransactions,
+      appreciationMonth,
       proventsMonth: totals.proventsMonth,
       netProfit: totals.provents + totals.appreciation,
       appreciationPercent: (totals.appreciation / totals.amount) * 100,

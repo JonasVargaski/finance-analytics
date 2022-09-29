@@ -39,7 +39,7 @@ interface IGroupedTransaction {
   transactions: ITransaction[];
 }
 
-interface IProventsMonth {
+export interface IResumeMonth {
   date: Date;
   formatedDate: string;
   value: number;
@@ -63,6 +63,7 @@ export interface IWalletPerformanceDTO {
   netProfit: number;
   transactions: ITransaction[];
   groupedTransactions: IGroupedTransaction[];
-  proventsMonth: IProventsMonth[];
+  proventsMonth: IResumeMonth[];
+  appreciationMonth: IResumeMonth[];
   portfolioComposition: IPortfolio[];
 }
