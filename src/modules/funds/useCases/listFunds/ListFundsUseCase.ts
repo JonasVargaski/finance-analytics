@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 
-import { IFundsRepository, IFundsSelect } from '../../repositories/IFundsRepository';
+import { IFundsRepository, IFundResumed } from '../../repositories/IFundsRepository';
 
 @injectable()
 export class ListFundsUseCase {
@@ -9,7 +9,7 @@ export class ListFundsUseCase {
     private fundsRepository: IFundsRepository,
   ) {}
 
-  async execute(): Promise<IFundsSelect[]> {
+  async execute(): Promise<IFundResumed[]> {
     return this.fundsRepository.findAll();
   }
 }

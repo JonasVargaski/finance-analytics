@@ -8,6 +8,7 @@ import swaggerConfig from './config/swagger.json';
 import { env } from './config/env';
 import { appRouter } from './routes';
 import { mockUserId } from './middlewares/mockUserId';
+import { FiiScrapProvider } from './shared/scraps/fiis/implementations/FiiScrapProvider';
 
 const app = express();
 app.use(express.json());
