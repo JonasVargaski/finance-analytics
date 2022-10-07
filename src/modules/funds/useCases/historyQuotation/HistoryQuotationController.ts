@@ -1,15 +1,14 @@
-import { parseISO } from 'date-fns';
 import { Request, Response } from 'express';
 import { container } from 'tsyringe';
-import { HistoryQuotationUseCase } from './HistoryQuotationUseCase';
+import { HistoryQuotationUseCase, tPeriod } from './HistoryQuotationUseCase';
 
 export class HistoryQuotationController {
   async handle(request: Request, response: Response): Promise<Response> {
     try {
-      const { ticker, startDate } = request.query;
+      const { ticker, period } = request.query;
       const historyQuotationUseCase = container.resolve(HistoryQuotationUseCase);
 
-      const result = await historyQuotationUseCase.execute(ticker.toString(), parseISO(startDate.toString()));
+      const result = await historyQuotationUseCase.execute(ticker.toString(), period as tPeriod);
 
       return response.json(result);
     } catch (error) {

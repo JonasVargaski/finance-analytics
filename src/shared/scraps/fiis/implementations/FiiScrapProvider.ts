@@ -1,6 +1,7 @@
 import axios from 'axios';
 import puppeteer from 'puppeteer';
 import { format, parse } from 'date-fns';
+import zonedTimeToUtc from 'date-fns-tz/zonedTimeToUtc';
 
 import { IFiiScrapProvider, IFii, IQuotation, IProvent, IFiiDetail, IVariation } from '../IFiiScrapProvider';
 
@@ -245,7 +246,7 @@ export class FiiScrapProvider implements IFiiScrapProvider {
       params: { ATIVO: ticker, DATAINICIO: format(startDate, 'yyyy-MM-dd'), MPB: 1, VNOM: 'ON' },
     });
 
-    return data.map((d) => ({ date: new Date(d[0]), value: d[4] }));
+    return data.map((d) => ({ date: zonedTimeToUtc(new Date(d[0]), 'America/Sao_Paulo'), value: d[4] }));
   }
 
   async findHistoryVariation(ticker: string, startDate: Date, endDate: Date): Promise<IVariation[]> {

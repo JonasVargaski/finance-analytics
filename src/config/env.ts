@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+process.env.TZ = 'UTC';
+
 enum eEnvironment {
   APP_URL = 'APP_URL',
   APP_SECRET = 'APP_SECRET',
