@@ -12,6 +12,12 @@ enum Role {
   ADMIN
 }
 
+enum TransactionType {
+  INCOME
+  OUTCOME
+  REVENUE
+}
+
 model Users {
   id        String   @id @default(uuid())
   name      String
@@ -21,8 +27,9 @@ model Users {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  wallets Wallets[]
-  Radar   Radar[]
+  wallets       Wallets[]
+  radar         Radar[]
+  accountInvest AccountInvest[]
 
   @@map("users")
 }
@@ -53,8 +60,8 @@ model Funds {
   updatedAt   DateTime @updatedAt
 
   transactions Transactions[]
-  Radar        Radar[]
-  DataScrap    DataScrap[]
+  radar        Radar[]
+  dataScrap    DataScrap[]
 
   @@map("funds")
 }
@@ -99,4 +106,33 @@ model DataScrap {
   fund Funds @relation(fields: [fundId], references: [id])
 
   @@map("dataScraps")
+}
+
+model AccountInvest {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user                     Users                      @relation(fields: [userId], references: [id])
+  accountInvestTransaction AccountInvestTransaction[]
+
+  @@map("accountInvest")
+}
+
+model AccountInvestTransaction {
+  id                   String          @id @default(uuid())
+  type                 TransactionType @default(INCOME)
+  value                Float           @default(0)
+  accruedIncome        Float           @default(0)
+  date                 DateTime
+  accountTransactionId String
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  accountInvest AccountInvest @relation(fields: [accountTransactionId], references: [id])
+
+  @@map("accountInvestTransaction")
 }
