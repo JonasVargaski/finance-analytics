@@ -89,7 +89,7 @@ export class WalletsRepository implements IWalletsRepository {
   }
 
   async findByUser(userId: string): Promise<Wallets[]> {
-    const wallets = await prisma.wallets.findMany({ where: { userId } });
+    const wallets = await prisma.wallets.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } });
     return wallets;
   }
 }
