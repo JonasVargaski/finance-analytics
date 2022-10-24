@@ -1,13 +1,28 @@
-FROM node:16.3.0-alpine
+###################
+# BUILD FOR LOCAL DEVELOPMENT
+###################
 
-WORKDIR /usr/app
+FROM node:16 As development
 
-COPY package.json ./
+# Required for Prisma Client to work in container
+RUN apt-get update && apt-get install -y openssl
 
-RUN npm install
+# Create app directory
+WORKDIR /usr/src/app
 
-COPY . .
+# Copy application dependency manifests to the container image.
+# A wildcard is used to ensure copying both package.json AND package-lock.json (when available).
+# Copying this first prevents re-running npm install on every code change.
+COPY --chown=node:node package*.json ./
 
-EXPOSE 3333
+# Install app dependencies using the `npm ci` command instead of `npm install`
+RUN npm ci
 
-CMD ["npm","run","dev"]
+# Bundle app source
+COPY --chown=node:node . .
+
+# Generate Prisma database client code
+RUN npm run prisma:generate
+
+# Use the node user from the image (instead of the root user)
+USER node
