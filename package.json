@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --exit-child --inspect --transpile-only --ignore-watch node_modules --respawn src/server.ts",
-    "migrate": "npx prisma migrate dev",
     "prisma:generate": "npx prisma generate"
   },
   "prisma": {

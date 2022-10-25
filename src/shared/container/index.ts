@@ -15,9 +15,13 @@ import { RadarRepository } from '../../modules/radar/repositories/implementation
 import { IFiiScrapProvider } from '../scraps/fiis/IFiiScrapProvider';
 import { FiiScrapProvider } from '../scraps/fiis/implementations/FiiScrapProvider';
 
+import { ICacheProvider } from '../cache/ICacheProvider';
+import { CacheProvider } from '../cache/implementations/CacheProvider';
+
 container.registerSingleton<IWalletsRepository>('WalletsRepository', WalletsRepository);
 container.registerSingleton<ITransactionsRepository>('TransactionsRepository', TransactionsRepository);
 container.registerSingleton<IFundsRepository>('FundsRepository', FundsRepository);
 container.registerSingleton<IRadarRepository>('RadarRepository', RadarRepository);
 
 container.registerSingleton<IFiiScrapProvider>('FiiScrapProvider', FiiScrapProvider);
+container.registerSingleton<ICacheProvider>('CacheProvider', CacheProvider);
